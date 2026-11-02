@@ -7,9 +7,9 @@ sign-and-verify test (RSA 1024/2048, ECC P-256/P-384) and a raw APDU console.
 
 ## Build
 
-Requires the Debian/Ubuntu packages `android-sdk-platform-23`, `android-sdk-build-tools`,
-`apksigner`, `aapt`, `zipalign` and JDK 17. Then run:
+Requires JDK 17+ and the Android SDK (platform 35). Then run:
 
-    ./build.sh
+    ./gradlew assembleDebug
 
-The output is a debug-signed `pivtest.apk`. A prebuilt APK is attached to the GitHub release.
+The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. CI builds it on every push
+and uploads it as an artifact. Targets Android 15 (API 35), min Android 6.0 (API 23).
