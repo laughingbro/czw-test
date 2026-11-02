@@ -13,6 +13,7 @@ import android.hardware.usb.UsbManager;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -52,7 +53,9 @@ public class MainActivity extends Activity implements NfcAdapter.ReaderCallback 
                 @Override
                 public void onReceive(Context ctx, Intent i) {
                     if (!ACTION_USB_PERMISSION.equals(i.getAction())) return;
-                    UsbDevice d = i.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    UsbDevice d = Build.VERSION.SDK_INT >= 33
+                            ? i.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class)
+                            : i.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                     if (d != null && i.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         openUsb(d);
                     } else {
@@ -67,7 +70,12 @@ public class MainActivity extends Activity implements NfcAdapter.ReaderCallback 
         nfc = NfcAdapter.getDefaultAdapter(this);
         usb = (UsbManager) getSystemService(Context.USB_SERVICE);
         buildUi();
-        registerReceiver(usbReceiver, new IntentFilter(ACTION_USB_PERMISSION));
+        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(usbReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(usbReceiver, filter);
+        }
         log("NFC: " + (nfc == null ? "not available" : nfc.isEnabled() ? "enabled" : "disabled in settings"));
         setStatus("No card. Tap a card (NFC) or press 'Connect USB reader'.");
     }
@@ -145,7 +153,12 @@ public class MainActivity extends Activity implements NfcAdapter.ReaderCallback 
         } else {
             log("Requesting USB permission for " + found.getDeviceName());
             usb.requestPermission(
-                    found, PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0));
+                    found,
+                    PendingIntent.getBroadcast(
+                            this,
+                            0,
+                            new Intent(ACTION_USB_PERMISSION).setPackage(getPackageName()),
+                            Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0));
         }
     }
 

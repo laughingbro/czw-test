@@ -1,0 +1,27 @@
+name: Build PIV Tester
+
+on:
+  push:
+    paths: ["piv-tester/**", ".github/workflows/piv-tester.yml"]
+  pull_request:
+    paths: ["piv-tester/**"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: piv-tester
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew --no-daemon assembleDebug lintDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pivtest-debug-apk
+          path: piv-tester/app/build/outputs/apk/debug/*.apk
